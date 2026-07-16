@@ -142,11 +142,13 @@ COPY --chown=${DEV_USER}:${DEV_USER} .p10k.zsh /home/${DEV_USER}/.p10k.zsh
 
 COPY --chown=root:root entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --chown=root:root resolvconf-shim.sh /usr/local/sbin/resolvconf
-COPY --chown=root:root danted.conf /etc/danted.conf
+COPY --chown=root:root danted.conf.tmpl /etc/danted.conf.tmpl
+COPY --chown=root:root net/ /usr/local/lib/devbox-net/
 COPY --chown=root:root devbox-motd.sh /etc/devbox-motd.sh
 USER root
 RUN chmod 755 /usr/local/bin/entrypoint.sh /usr/local/sbin/resolvconf /etc/devbox-motd.sh \
-    && chmod 644 /etc/danted.conf
+        /usr/local/lib/devbox-net/*.sh \
+    && chmod 644 /etc/danted.conf.tmpl /usr/local/lib/devbox-net/singbox-base.json
 USER ${DEV_USER}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

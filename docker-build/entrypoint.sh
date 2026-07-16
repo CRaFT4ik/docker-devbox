@@ -53,16 +53,21 @@ if [ -d "${HOME}/.grok-default" ] && [ ! -e "/var/lib/devbox/grok/config.toml" ]
 fi
 ln -sfn /var/lib/devbox/grok "${HOME}/.grok"
 
-while IFS= read -r cfg; do
-    [ -z "${cfg}" ] && continue
-    iface="$(basename "${cfg}" .conf)"
-    echo "[entrypoint] bringing up WireGuard interface ${iface}..."
-    sudo wg-quick up "${iface}" || echo "[entrypoint] wg-quick up ${iface} failed"
-done < <(sudo find /etc/wireguard -maxdepth 1 -type f -name '*.conf' 2>/dev/null)
+# --- VPN mode dispatch -------------------------------------------------------
+NET_DIR=/usr/local/lib/devbox-net
+case "${VPN_MODE:-}" in
+    singbox)   "${NET_DIR}/mode-singbox.sh" ;;
+    hostproxy) "${NET_DIR}/mode-hostproxy.sh" ;;
+    wireguard) "${NET_DIR}/mode-wireguard.sh" ;;
+    "")  echo "[vpn] FATAL: VPN_MODE is not set. Use singbox | hostproxy | wireguard." >&2; exit 1 ;;
+    *)   echo "[vpn] FATAL: unknown VPN_MODE='${VPN_MODE}'. Use singbox | hostproxy | wireguard." >&2; exit 1 ;;
+esac
 
-if [ -f /etc/danted.conf ]; then
-    echo "[entrypoint] starting SOCKS5 (danted) on :1080..."
-    sudo danted -f /etc/danted.conf -D || echo "[entrypoint] danted failed to start"
-fi
+# --- danted (SOCKS5 for the host), external interface per active mode ---------
+IFACE="$(cat /run/devbox-vpn-iface 2>/dev/null || true)"
+[ -n "$IFACE" ] || { echo "[vpn] FATAL: no active VPN interface recorded" >&2; exit 1; }
+sed "s/__EXTERNAL_IFACE__/${IFACE}/" /etc/danted.conf.tmpl | sudo tee /etc/danted.conf >/dev/null
+echo "[vpn] starting SOCKS5 (danted) on :1080 via ${IFACE}..."
+sudo danted -f /etc/danted.conf -D || echo "[vpn] danted failed to start"
 
 exec "$@"
