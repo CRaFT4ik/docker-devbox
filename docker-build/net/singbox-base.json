@@ -1,0 +1,32 @@
+{
+  "log": { "level": "warn" },
+  "dns": {
+    "servers": [{ "tag": "google", "address": "8.8.8.8" }],
+    "strategy": "prefer_ipv4"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": ["172.19.0.1/30"],
+      "auto_route": true,
+      "auto_redirect": true,
+      "strict_route": false,
+      "stack": "mixed",
+      "sniff": true
+    }
+  ],
+  "outbounds": [
+    { "type": "socks", "tag": "proxy", "server": "host.docker.internal", "server_port": __HOST_SOCKS_PORT__, "version": "5" },
+    { "type": "direct", "tag": "direct" }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "final": "proxy",
+    "rules": [
+      { "action": "sniff" },
+      { "protocol": "dns", "action": "hijack-dns" },
+      { "ip_is_private": true, "outbound": "direct" }
+    ]
+  }
+}
