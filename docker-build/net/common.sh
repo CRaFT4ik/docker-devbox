@@ -1,0 +1,43 @@
+#!/bin/bash
+# Shared helpers for the VPN mode scripts. Sourced, not executed.
+
+log() { echo "[vpn] $*" >&2; }
+die() { echo "[vpn] FATAL: $*" >&2; exit 1; }
+
+# Probe that nftables writes work — the same nf_tables netlink path sing-box's
+# auto_redirect uses. Fails loudly with a specific message so the generic
+# sing-box "configure tun interface: permission denied" is never the only clue.
+nft_preflight() {
+    if sudo nft add table inet __devbox_probe 2>/dev/null \
+       && sudo nft delete table inet __devbox_probe 2>/dev/null; then
+        return 0
+    fi
+    die "nftables writes failed — auto_redirect needs nf_tables/nf_nat in the host kernel. On Apple Silicon OrbStack this can be a host-side restriction on netfilter writes from containers."
+}
+
+# Point the container at a non-loopback resolver so DNS enters the TUN and is
+# captured by sing-box (Docker's default 127.0.0.11 is loopback and leaks).
+set_resolver() {
+    printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' | sudo tee /etc/resolv.conf >/dev/null
+    log "resolv.conf set to 1.1.1.1/8.8.8.8 for TUN DNS capture"
+}
+
+# Names of current tun* links, space-separated (empty if none).
+snapshot_tuns() {
+    ip -o link show 2>/dev/null | awk -F': ' '$2 ~ /^tun/ {print $2}' | tr '\n' ' '
+}
+
+# Wait for a tun* link not in $1 that has an inet address. Echo its name.
+wait_for_new_tun_ip() {
+    local pre="$1" i iface
+    for i in $(seq 1 50); do            # 50 * 0.2s = 10s
+        for iface in $(snapshot_tuns); do
+            case " $pre " in *" $iface "*) continue;; esac   # was pre-existing
+            if ip -o addr show dev "$iface" 2>/dev/null | grep -q 'inet '; then
+                echo "$iface"; return 0
+            fi
+        done
+        sleep 0.2
+    done
+    die "no new TUN interface with an IP appeared within 10s"
+}
