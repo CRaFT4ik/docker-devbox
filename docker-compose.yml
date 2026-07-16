@@ -12,14 +12,19 @@ services:
     user: ${DEV_USER}
     environment:
       TZ: Europe/Moscow
+      VPN_MODE: ${VPN_MODE}
+      SUB_URL: ${SUB_URL:-}
+      HOST_SOCKS_PORT: ${HOST_SOCKS_PORT:-}
     cap_add:
       - NET_ADMIN
+    devices:
+      - /dev/net/tun
     sysctls:
       net.ipv4.conf.all.src_valid_mark: 1
     ports:
       - "127.0.0.1:${SOCKS_HOST_PORT}:1080"
     volumes:
-      - "${WG_CONFIG}:/etc/wireguard/${WG_CONFIG}:ro"
+      - "./wireguard/:/etc/wireguard/:ro"
       - "${HOST_ANDROID_SDK}:/home/${DEV_USER}/Android/Sdk"
       - "${HOST_WORK_DIR}:/home/${DEV_USER}/mnt/.work"
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
