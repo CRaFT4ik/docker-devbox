@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        wireguard-tools iproute2 iptables dante-server \
+        wireguard-tools iproute2 iptables nftables dante-server \
         curl wget iputils-ping dnsutils net-tools traceroute mtr-tiny \
         tcpdump nmap netcat-openbsd socat jq openssh-client rsync \
         git vim nano less sudo ca-certificates gnupg \
@@ -33,6 +33,23 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 RUN npm install -g --omit=dev \
         @anthropic-ai/claude-code \
         @openai/codex
+
+# sing-box (pinned) — TUN engine for the singbox/hostproxy VPN modes.
+ARG SINGBOX_VERSION=1.13.14
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) sha="f48703461a15476951ac4967cdad339d986f4b8096b4eb3ff0829a500502d697";; \
+      arm64) sha="4742df6a4314e8ecc41736849fca6d73b8f9e91b6e8b06ee794ff17ba180579e";; \
+      *) echo "unsupported arch: $arch" >&2; exit 1;; \
+    esac; \
+    url="https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-${arch}.tar.gz"; \
+    curl -fsSL "$url" -o /tmp/sb.tgz; \
+    echo "${sha}  /tmp/sb.tgz" | sha256sum -c -; \
+    tar -xzf /tmp/sb.tgz -C /tmp; \
+    install -m 0755 "/tmp/sing-box-${SINGBOX_VERSION}-linux-${arch}/sing-box" /usr/local/bin/sing-box; \
+    rm -rf /tmp/sb.tgz "/tmp/sing-box-${SINGBOX_VERSION}-linux-${arch}"; \
+    /usr/local/bin/sing-box version
 
 RUN if id ubuntu >/dev/null 2>&1; then userdel -r ubuntu 2>/dev/null || true; fi \
     && if getent group "${DEV_GID}" >/dev/null; then groupmod -n "${DEV_USER}" "$(getent group ${DEV_GID} | cut -d: -f1)"; else groupadd -g "${DEV_GID}" "${DEV_USER}"; fi \
