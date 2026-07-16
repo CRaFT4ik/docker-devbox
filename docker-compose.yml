@@ -1,0 +1,37 @@
+services:
+  devbox:
+    build:
+      context: ./docker-build
+      args:
+        DEV_USER: ${DEV_USER}
+        DEV_UID: ${DEV_UID}
+        DEV_GID: ${DEV_GID}
+    image: craft4ik/agents-devbox:latest
+    container_name: devbox
+    hostname: devbox
+    user: ${DEV_USER}
+    environment:
+      TZ: Europe/Moscow
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      net.ipv4.conf.all.src_valid_mark: 1
+    ports:
+      - "127.0.0.1:${SOCKS_HOST_PORT}:1080"
+    volumes:
+      - "${WG_CONFIG}:/etc/wireguard/${WG_CONFIG}:ro"
+      - "${HOST_ANDROID_SDK}:/home/${DEV_USER}/Android/Sdk"
+      - "${HOST_WORK_DIR}:/home/${DEV_USER}/mnt/.work"
+      - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
+      - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
+      - "${HOST_GRADLE_HOME}:/home/${DEV_USER}/.gradle"
+      - "devbox:/var/lib/devbox"
+    working_dir: /home/${DEV_USER}/mnt/.work
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+
+volumes:
+  devbox:

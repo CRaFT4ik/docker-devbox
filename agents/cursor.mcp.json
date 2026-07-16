@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "android-studio-index": {
+      "url": "http://host.docker.internal:29171/index-mcp/streamable-http"
+    }
+  }
+}
