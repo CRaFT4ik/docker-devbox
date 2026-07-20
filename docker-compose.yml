@@ -6,8 +6,8 @@ services:
         DEV_USER: ${DEV_USER}
         DEV_UID: ${DEV_UID}
         DEV_GID: ${DEV_GID}
-    image: craft4ik/agents-devbox:latest
-    container_name: devbox
+    image: craft4ik/agents-devbox-dev:latest
+    container_name: devbox_dev
     hostname: devbox
     user: ${DEV_USER}
     environment:
