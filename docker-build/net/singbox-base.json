@@ -16,7 +16,7 @@
     }
   ],
   "outbounds": [
-    { "type": "socks", "tag": "proxy", "server": "host.docker.internal", "server_port": __HOST_SOCKS_PORT__, "version": "5" },
+    { "type": "socks", "tag": "proxy", "server": "host.docker.internal", "server_port": __HOSTPROXY_PORT__, "version": "5" },
     { "type": "direct", "tag": "direct" }
   ],
   "route": {

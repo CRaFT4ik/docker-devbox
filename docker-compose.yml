@@ -1,5 +1,5 @@
 services:
-  devbox:
+  devbox-dev:
     build:
       context: ./docker-build
       args:
@@ -14,7 +14,7 @@ services:
       TZ: Europe/Moscow
       VPN_MODE: ${VPN_MODE}
       SUB_URL: ${SUB_URL:-}
-      HOST_SOCKS_PORT: ${HOST_SOCKS_PORT:-}
+      HOSTPROXY_PORT: ${HOSTPROXY_PORT:-}
     cap_add:
       - NET_ADMIN
     devices:
@@ -22,7 +22,7 @@ services:
     sysctls:
       net.ipv4.conf.all.src_valid_mark: 1
     ports:
-      - "127.0.0.1:${SOCKS_HOST_PORT}:1080"
+      - "127.0.0.1:${SOCKS_PUBLISH_PORT}:1080"
     volumes:
       - "./wireguard/:/etc/wireguard/:ro"
       - "${HOST_ANDROID_SDK}:/home/${DEV_USER}/Android/Sdk"
