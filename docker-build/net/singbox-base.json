@@ -1,8 +1,9 @@
 {
   "log": { "level": "warn" },
   "dns": {
-    "servers": [{ "type": "udp", "tag": "google", "server": "8.8.8.8" }],
-    "strategy": "prefer_ipv4"
+    "servers": [
+      { "type": "local", "tag": "local" }
+    ]
   },
   "inbounds": [
     {
@@ -11,8 +12,7 @@
       "address": ["172.19.0.1/30"],
       "auto_route": true,
       "strict_route": true,
-      "stack": "mixed",
-      "sniff": true
+      "stack": "mixed"
     }
   ],
   "outbounds": [
@@ -21,6 +21,7 @@
   ],
   "route": {
     "auto_detect_interface": true,
+    "default_domain_resolver": { "server": "local" },
     "final": "proxy",
     "rules": [
       { "action": "sniff" },
