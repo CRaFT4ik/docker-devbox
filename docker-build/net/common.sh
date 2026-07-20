@@ -16,7 +16,8 @@ snapshot_tuns() {
     ip -o link show 2>/dev/null | awk -F': ' '$2 ~ /^tun/ {print $2}' | tr '\n' ' '
 }
 
-# Wait for a tun* link not in $1 that has an inet address. Echo its name.
+# Wait for a tun* link not in $1 that has an inet address. Echo its name on
+# success (return 0); return 1 on timeout so the caller can surface sing-box logs.
 wait_for_new_tun_ip() {
     local pre="$1" i iface
     for i in $(seq 1 50); do            # 50 * 0.2s = 10s
@@ -28,5 +29,5 @@ wait_for_new_tun_ip() {
         done
         sleep 0.2
     done
-    die "no new TUN interface with an IP appeared within 10s"
+    return 1
 }

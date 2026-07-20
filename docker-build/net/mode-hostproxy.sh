@@ -5,6 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${DIR}/common.sh"
 
 CFG=/var/lib/devbox/singbox/config.json
+LOG=/var/lib/devbox/singbox/sing-box.log
 mkdir -p /var/lib/devbox/singbox
 [ -n "${HOST_SOCKS_PORT:-}" ] || die "HOST_SOCKS_PORT is not set (required for VPN_MODE=hostproxy)"
 
@@ -15,9 +16,13 @@ sing-box check -c "$CFG" || die "sing-box check failed on the hostproxy config"
 
 sudo pkill -x sing-box 2>/dev/null || true
 pre="$(snapshot_tuns)"
-sudo sing-box run -c "$CFG" >/var/log/sing-box.log 2>&1 &
-log "sing-box started (hostproxy mode -> host.docker.internal:${HOST_SOCKS_PORT}); waiting for TUN..."
+sudo sh -c "sing-box run -c '$CFG' >'$LOG' 2>&1 &"
+log "sing-box started (hostproxy mode -> host.docker.internal:${HOST_SOCKS_PORT}); waiting for TUN... (log: $LOG)"
 
-iface="$(wait_for_new_tun_ip "$pre")"
+if ! iface="$(wait_for_new_tun_ip "$pre")"; then
+    log "TUN did not come up — last sing-box log lines:"
+    tail -n 20 "$LOG" 2>/dev/null | sed 's/^/[sing-box] /' >&2 || true
+    die "sing-box failed to bring up the TUN interface"
+fi
 echo "$iface" | sudo tee /run/devbox-vpn-iface >/dev/null
 log "TUN up: $iface"

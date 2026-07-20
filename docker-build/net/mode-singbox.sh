@@ -5,6 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${DIR}/common.sh"
 
 CFG=/var/lib/devbox/singbox/config.json
+LOG=/var/lib/devbox/singbox/sing-box.log
 mkdir -p /var/lib/devbox/singbox
 
 set_resolver
@@ -23,9 +24,15 @@ sing-box check -c "$CFG" || die "sing-box check failed on the fetched config ($S
 
 sudo pkill -x sing-box 2>/dev/null || true       # avoid clash_api/mixed-in port clash on restart
 pre="$(snapshot_tuns)"
-sudo sing-box run -c "$CFG" >/var/log/sing-box.log 2>&1 &
-log "sing-box started (singbox mode); waiting for TUN..."
+# Log to the volume dir (user-writable); run the redirect inside the root shell
+# so sudo owns the file, not the unprivileged calling shell.
+sudo sh -c "sing-box run -c '$CFG' >'$LOG' 2>&1 &"
+log "sing-box started (singbox mode); waiting for TUN... (log: $LOG)"
 
-iface="$(wait_for_new_tun_ip "$pre")"
+if ! iface="$(wait_for_new_tun_ip "$pre")"; then
+    log "TUN did not come up — last sing-box log lines:"
+    tail -n 20 "$LOG" 2>/dev/null | sed 's/^/[sing-box] /' >&2 || true
+    die "sing-box failed to bring up the TUN interface"
+fi
 echo "$iface" | sudo tee /run/devbox-vpn-iface >/dev/null
 log "TUN up: $iface"
