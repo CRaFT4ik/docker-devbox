@@ -7,16 +7,17 @@ source "${DIR}/common.sh"
 CFG=/var/lib/devbox/singbox/config.json
 mkdir -p /var/lib/devbox/singbox
 
-nft_preflight
 set_resolver
 
 SRC="$("${DIR}/fetch-subscription.sh")"          # validated sub.json path
 
 # Structural patch only (no coupling to tags/servers/keys):
-#  - TUN inbound: Docker-compatible transparent routing
-#  - route: force loop-prevention regardless of what the panel emitted
-jq '(.inbounds[] | select(.type=="tun")) |= . + {auto_redirect:true, strict_route:false}
-    | .route.auto_detect_interface = true' "$SRC" > "$CFG"
+#  - route: force loop-prevention regardless of what the panel emitted.
+# We do NOT touch the panel's tun inbound: it already ships auto_route+strict_route,
+# and we deliberately do not add auto_redirect (it requires nftables writes, which
+# OrbStack blocks from inside containers, and it is only needed to keep a
+# host-published port working — not our concern for in-container traffic).
+jq '.route.auto_detect_interface = true' "$SRC" > "$CFG"
 
 sing-box check -c "$CFG" || die "sing-box check failed on the fetched config ($SRC)"
 

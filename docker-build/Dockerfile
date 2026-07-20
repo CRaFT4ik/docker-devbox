@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        wireguard-tools iproute2 iptables nftables dante-server \
+        wireguard-tools iproute2 iptables dante-server \
         curl wget iputils-ping dnsutils net-tools traceroute mtr-tiny \
         tcpdump nmap netcat-openbsd socat jq openssh-client rsync \
         git vim nano less sudo ca-certificates gnupg \

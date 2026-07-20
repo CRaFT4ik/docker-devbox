@@ -4,17 +4,6 @@
 log() { echo "[vpn] $*" >&2; }
 die() { echo "[vpn] FATAL: $*" >&2; exit 1; }
 
-# Probe that nftables writes work — the same nf_tables netlink path sing-box's
-# auto_redirect uses. Fails loudly with a specific message so the generic
-# sing-box "configure tun interface: permission denied" is never the only clue.
-nft_preflight() {
-    if sudo nft add table inet __devbox_probe 2>/dev/null \
-       && sudo nft delete table inet __devbox_probe 2>/dev/null; then
-        return 0
-    fi
-    die "nftables writes failed — auto_redirect needs nf_tables/nf_nat in the host kernel. On Apple Silicon OrbStack this can be a host-side restriction on netfilter writes from containers."
-}
-
 # Point the container at a non-loopback resolver so DNS enters the TUN and is
 # captured by sing-box (Docker's default 127.0.0.11 is loopback and leaks).
 set_resolver() {

@@ -8,7 +8,6 @@ CFG=/var/lib/devbox/singbox/config.json
 mkdir -p /var/lib/devbox/singbox
 [ -n "${HOST_SOCKS_PORT:-}" ] || die "HOST_SOCKS_PORT is not set (required for VPN_MODE=hostproxy)"
 
-nft_preflight
 set_resolver
 
 sed "s/__HOST_SOCKS_PORT__/${HOST_SOCKS_PORT}/" "${DIR}/singbox-base.json" > "$CFG"
