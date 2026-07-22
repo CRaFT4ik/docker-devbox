@@ -9,9 +9,15 @@ LOG=/var/lib/devbox/singbox/sing-box.log
 mkdir -p /var/lib/devbox/singbox
 [ -n "${HOSTPROXY_PORT:-}" ] || die "HOSTPROXY_PORT is not set (required for VPN_MODE=hostproxy)"
 
+# DNS server the container resolves through (reached via the host proxy). Default
+# to Cloudflare; override with DNS_SERVER for a corporate/VPN resolver.
+DNS_SERVER="${DNS_SERVER:-8.8.8.8}"
+
 set_resolver
 
-sed "s/__HOSTPROXY_PORT__/${HOSTPROXY_PORT}/" "${DIR}/singbox-base.json" > "$CFG"
+sed -e "s/__HOSTPROXY_PORT__/${HOSTPROXY_PORT}/" \
+    -e "s/__DNS_SERVER__/${DNS_SERVER}/" \
+    "${DIR}/singbox-base.json" > "$CFG"
 sing-box check -c "$CFG" || die "sing-box check failed on the hostproxy config"
 
 sudo pkill -x sing-box 2>/dev/null || true
@@ -26,3 +32,8 @@ if ! iface="$(wait_for_new_tun_ip "$pre")"; then
 fi
 echo "$iface" | sudo tee /run/devbox-vpn-iface >/dev/null
 log "TUN up: $iface"
+
+# TUN is up and auto_route has installed its rules; now punch the host-gateway /
+# LAN exclusion (pref 1) so host-bound traffic (the proxy itself, MCP servers)
+# goes out the host NIC instead of looping back into the proxy through the TUN.
+exclude_host_from_tun

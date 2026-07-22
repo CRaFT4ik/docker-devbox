@@ -36,3 +36,8 @@ if ! iface="$(wait_for_new_tun_ip "$pre")"; then
 fi
 echo "$iface" | sudo tee /run/devbox-vpn-iface >/dev/null
 log "TUN up: $iface"
+
+# TUN is up and auto_route has installed its rules; keep the host-gateway / LAN
+# out of the tunnel (pref 1 > auto_route's pref 9000+) so host-bound traffic —
+# the published danted proxy, host MCP servers — reaches the host NIC directly.
+exclude_host_from_tun
