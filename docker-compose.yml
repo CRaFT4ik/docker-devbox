@@ -1,13 +1,13 @@
 services:
-  devbox-dev:
+  devbox:
     build:
       context: ./docker-build
       args:
         DEV_USER: ${DEV_USER}
         DEV_UID: ${DEV_UID}
         DEV_GID: ${DEV_GID}
-    image: craft4ik/agents-devbox-dev:latest
-    container_name: devbox_dev
+    image: craft4ik/agents-devbox:latest
+    container_name: devbox
     hostname: devbox
     user: ${DEV_USER}
     environment:
