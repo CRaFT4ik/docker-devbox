@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         zsh bash-completion unzip zip file tree htop procps \
         locales tzdata \
         openjdk-17-jdk-headless \
+        gh \
     && sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen && locale-gen \
     && ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime \
     && echo "Europe/Moscow" > /etc/timezone \
