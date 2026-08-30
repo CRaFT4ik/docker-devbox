@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-sudo mkdir -p /var/lib/devbox/{claude,cursor,codex,grok,gradle,gh}
+sudo mkdir -p /var/lib/devbox/{claude,cursor,codex,grok,gradle}
 # gradle/ is pruned: Gradle fills it as this user anyway, and it holds the
 # read-only host mounts, which chown would fail on.
 sudo find /var/lib/devbox -path /var/lib/devbox/gradle -prune -o -exec chown "$(id -u):$(id -g)" {} +
@@ -55,6 +55,12 @@ if [ -d "${HOME}/.grok-default" ] && [ ! -e "/var/lib/devbox/grok/config.toml" ]
     cp -an "${HOME}/.grok-default/." /var/lib/devbox/grok/ 2>/dev/null || true
 fi
 ln -sfn /var/lib/devbox/grok "${HOME}/.grok"
+
+# gh keeps its auth token in ~/.config/gh, which is part of the container's
+# writable layer — `gh auth login` would be lost on every recreation. Persist
+# that dir under the volume's $HOME mirror, at gh's own native path.
+mkdir -p "${PERSIST_HOME}/.config/gh" "${HOME}/.config"
+ln -sfn "${PERSIST_HOME}/.config/gh" "${HOME}/.config/gh"
 
 # Gradle writes into its own home in the volume: a home shared with the host
 # corrupts its caches, the file locks don't hold across the VM boundary. Only

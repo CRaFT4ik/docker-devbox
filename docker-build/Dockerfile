@@ -67,10 +67,6 @@ RUN if id ubuntu >/dev/null 2>&1; then userdel -r ubuntu 2>/dev/null || true; fi
 
 ENV CLAUDE_CONFIG_DIR=/home/${DEV_USER}/.claude
 
-# gh keeps its auth token in its config dir; put it in the volume so
-# `gh auth login` survives container recreation.
-ENV GH_CONFIG_DIR=/var/lib/devbox/gh
-
 # Gradle writes to its own home in the volume and reads deps from the host's
 # read-only cache mounted next to it. Set here, not in compose: `docker exec`
 # inherits the image ENV, not what entrypoint.sh exports.
