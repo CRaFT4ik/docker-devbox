@@ -13,6 +13,7 @@ services:
     environment:
       TZ: Europe/Moscow
       VPN_MODE: ${VPN_MODE}
+      HOST_ANDROID_SDK: ${HOST_ANDROID_SDK}
       SUB_URL: ${SUB_URL:-}
       HOSTPROXY_PORT: ${HOSTPROXY_PORT:-}
       DNS_SERVER: ${DNS_SERVER:-}

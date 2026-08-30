@@ -61,6 +61,14 @@ ln -sfn /var/lib/devbox/grok "${HOME}/.grok"
 # the host's read-only caches-ro and gradle.properties are mounted into it.
 ln -sfn "${GRADLE_USER_HOME}" "${HOME}/.gradle"
 
+# A project's local.properties is shared with the host, so its sdk.dir holds a
+# host path. Make that path resolve here too — one file then fits both sides,
+# and the rest of local.properties (build flags) stays single-source.
+if [ -n "${HOST_ANDROID_SDK:-}" ] && [ "${HOST_ANDROID_SDK}" != "${ANDROID_HOME}" ]; then
+    sudo mkdir -p "$(dirname "${HOST_ANDROID_SDK}")"
+    sudo ln -sfn "${ANDROID_HOME}" "${HOST_ANDROID_SDK}"
+fi
+
 # --- VPN mode dispatch -------------------------------------------------------
 NET_DIR=/usr/local/lib/devbox-net
 case "${VPN_MODE:-}" in
