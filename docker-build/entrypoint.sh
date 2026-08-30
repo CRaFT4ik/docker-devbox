@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-sudo mkdir -p /var/lib/devbox/{claude,cursor,codex,grok,gradle}
+sudo mkdir -p /var/lib/devbox/{claude,cursor,codex,grok,gradle,gh}
 # gradle/ is pruned: Gradle fills it as this user anyway, and it holds the
 # read-only host mounts, which chown would fail on.
 sudo find /var/lib/devbox -path /var/lib/devbox/gradle -prune -o -exec chown "$(id -u):$(id -g)" {} +
