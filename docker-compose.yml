@@ -29,6 +29,8 @@ services:
       - "./wireguard/:/etc/wireguard/:ro"
       - "${HOST_ANDROID_SDK}:/home/${DEV_USER}/Android/Sdk"
       - "${HOST_WORK_DIR}:/home/${DEV_USER}/mnt/.work"
+      # Same tree at its host path too, so Gradle's caches survive host<->container switches.
+      - "${HOST_WORK_DIR}:${HOST_WORK_DIR}"
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
       - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
       - "devbox:/var/lib/devbox"
