@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
-sudo mkdir -p /var/lib/devbox/{claude,cursor,codex,grok}
-sudo chown -R "$(id -u):$(id -g)" /var/lib/devbox
+sudo mkdir -p /var/lib/devbox/{claude,cursor,codex,grok,gradle}
+# gradle/ is pruned: Gradle fills it as this user anyway, and it holds the
+# read-only host mounts, which chown would fail on.
+sudo find /var/lib/devbox -path /var/lib/devbox/gradle -prune -o -exec chown "$(id -u):$(id -g)" {} +
+sudo chown "$(id -u):$(id -g)" /var/lib/devbox/gradle
 
 # Persist user configs and shell history in the devbox volume so they survive
 # container recreation.
@@ -52,6 +55,11 @@ if [ -d "${HOME}/.grok-default" ] && [ ! -e "/var/lib/devbox/grok/config.toml" ]
     cp -an "${HOME}/.grok-default/." /var/lib/devbox/grok/ 2>/dev/null || true
 fi
 ln -sfn /var/lib/devbox/grok "${HOME}/.grok"
+
+# Gradle writes into its own home in the volume: a home shared with the host
+# corrupts its caches, the file locks don't hold across the VM boundary. Only
+# the host's read-only caches-ro and gradle.properties are mounted into it.
+ln -sfn "${GRADLE_USER_HOME}" "${HOME}/.gradle"
 
 # --- VPN mode dispatch -------------------------------------------------------
 NET_DIR=/usr/local/lib/devbox-net

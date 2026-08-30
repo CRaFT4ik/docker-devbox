@@ -67,6 +67,13 @@ RUN if id ubuntu >/dev/null 2>&1; then userdel -r ubuntu 2>/dev/null || true; fi
 
 ENV CLAUDE_CONFIG_DIR=/home/${DEV_USER}/.claude
 
+# Gradle writes to its own home in the volume and reads deps from the host's
+# read-only cache mounted next to it. Set here, not in compose: `docker exec`
+# inherits the image ENV, not what entrypoint.sh exports.
+ENV GRADLE_USER_HOME=/var/lib/devbox/gradle \
+    GRADLE_RO_DEP_CACHE=/var/lib/devbox/gradle/caches-ro \
+    GRADLE_OPTS=-Dorg.gradle.vfs.watch=false
+
 ENV HOME=/home/${DEV_USER} \
     ANDROID_HOME=/home/${DEV_USER}/Android/Sdk \
     ANDROID_SDK_ROOT=/home/${DEV_USER}/Android/Sdk \

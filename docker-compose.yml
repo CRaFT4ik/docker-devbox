@@ -30,8 +30,9 @@ services:
       - "${HOST_WORK_DIR}:/home/${DEV_USER}/mnt/.work"
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
       - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
-      - "${HOST_GRADLE_HOME}:/home/${DEV_USER}/.gradle"
       - "devbox:/var/lib/devbox"
+      - "${HOST_GRADLE_HOME}/caches:/var/lib/devbox/gradle/caches-ro:ro"
+      - "${HOST_GRADLE_HOME}/gradle.properties:/var/lib/devbox/gradle/gradle.properties:ro"
     working_dir: /home/${DEV_USER}/mnt/.work
     restart: unless-stopped
     tty: true
