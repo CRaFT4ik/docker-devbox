@@ -75,6 +75,26 @@ if [ -n "${HOST_ANDROID_SDK:-}" ] && [ "${HOST_ANDROID_SDK}" != "${ANDROID_HOME}
     sudo ln -sfn "${ANDROID_HOME}" "${HOST_ANDROID_SDK}"
 fi
 
+# Merge a custom Java truststore (corp CAs) into the JDK cacerts so TLS to
+# internal hosts — e.g. the Gradle artifact repository — is trusted instead of
+# failing with "untrusted". The store is bind-mounted at a fixed path (compose
+# defaults the source to /dev/null when unset, so a char device lands here and
+# the -f guard skips it). Done here, not baked into the image: the published
+# image must not carry a company's private CAs, and this way cert rotation
+# needs no rebuild. keytool skips aliases that already exist, so restarts are a
+# no-op; the JDK path is resolved at runtime, being architecture-specific.
+JAVA_CACERTS_SRC=/etc/devbox/custom-cacerts
+if [ -f "${JAVA_CACERTS_SRC}" ]; then
+    jdk_cacerts="$(dirname "$(dirname "$(readlink -f "$(command -v keytool)")")")/lib/security/cacerts"
+    if sudo keytool -importkeystore -noprompt \
+            -srckeystore "${JAVA_CACERTS_SRC}" -srcstorepass "${HOST_JAVA_CACERTS_PASS:-changeit}" \
+            -destkeystore "${jdk_cacerts}" -deststorepass changeit >/dev/null 2>&1; then
+        echo "[java] merged custom CAs into the JDK truststore"
+    else
+        echo "[java] WARN: could not merge the custom truststore — check HOST_JAVA_CACERTS_PASS" >&2
+    fi
+fi
+
 # --- VPN mode dispatch -------------------------------------------------------
 NET_DIR=/usr/local/lib/devbox-net
 case "${VPN_MODE:-}" in

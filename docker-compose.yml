@@ -17,6 +17,7 @@ services:
       SUB_URL: ${SUB_URL:-}
       HOSTPROXY_PORT: ${HOSTPROXY_PORT:-}
       HOSTPROXY_DNS_SERVER: ${HOSTPROXY_DNS_SERVER:-}
+      HOST_JAVA_CACERTS_PASS: ${HOST_JAVA_CACERTS_PASS:-}
     cap_add:
       - NET_ADMIN
     devices:
@@ -29,13 +30,13 @@ services:
       - "./wireguard/:/etc/wireguard/:ro"
       - "${HOST_ANDROID_SDK}:/home/${DEV_USER}/Android/Sdk"
       - "${HOST_WORK_DIR}:/home/${DEV_USER}/mnt/.work"
-      # Same tree at its host path too, so Gradle's caches survive host<->container switches.
-      - "${HOST_WORK_DIR}:${HOST_WORK_DIR}"
+      - "${HOST_WORK_DIR}:${HOST_WORK_DIR}" # Same tree at its host path too, so Gradle's caches survive host<->container switches.
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
       - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
-      - "devbox:/var/lib/devbox"
       - "${HOST_GRADLE_HOME}/caches:/var/lib/devbox/gradle/caches-ro:ro"
       - "${HOST_GRADLE_HOME}/gradle.properties:/var/lib/devbox/gradle/gradle.properties:ro"
+      - "${HOST_JAVA_CACERTS:-/dev/null}:/etc/devbox/custom-cacerts:ro"
+      - "devbox:/var/lib/devbox"
     working_dir: /home/${DEV_USER}/mnt/.work
     restart: unless-stopped
     tty: true
