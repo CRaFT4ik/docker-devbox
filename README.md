@@ -64,6 +64,7 @@ services:
       SUB_URL: ${SUB_URL:-}
       HOSTPROXY_PORT: ${HOSTPROXY_PORT:-}
       HOSTPROXY_DNS_SERVER: ${HOSTPROXY_DNS_SERVER:-}
+      HOST_JAVA_CACERTS_PASS: ${HOST_JAVA_CACERTS_PASS:-}
     cap_add:
       - NET_ADMIN
     devices:
@@ -80,9 +81,11 @@ services:
       - "${HOST_WORK_DIR}:${HOST_WORK_DIR}"
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
       - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
-      - "devbox:/var/lib/devbox"
       - "${HOST_GRADLE_HOME}/caches:/var/lib/devbox/gradle/caches-ro:ro"
       - "${HOST_GRADLE_HOME}/gradle.properties:/var/lib/devbox/gradle/gradle.properties:ro"
+      # Optional custom CA truststore; unset -> /dev/null, which the entrypoint skips.
+      - "${HOST_JAVA_CACERTS:-/dev/null}:/etc/devbox/custom-cacerts:ro"
+      - "devbox:/var/lib/devbox"
     working_dir: /home/${DEV_USER}/mnt/.work
     restart: unless-stopped
     tty: true
@@ -127,6 +130,13 @@ HOST_SSH_DIR=/absolute/path/to/.ssh
 # read-only; the container writes to its own Gradle home in the volume.
 HOST_GRADLE_HOME=/absolute/path/to/.gradle
 
+# Optional: a custom Java truststore (JKS/PKCS12) with your corporate CAs. On
+# start its certs are merged into the container JDK's cacerts, so TLS to
+# internal hosts (e.g. the Gradle artifact repo) is trusted. Leave empty to
+# skip; the password defaults to changeit.
+HOST_JAVA_CACERTS=
+HOST_JAVA_CACERTS_PASS=
+
 # Egress mode (REQUIRED). One of: singbox | hostproxy | wireguard
 VPN_MODE=singbox
 
@@ -155,6 +165,8 @@ SOCKS_PUBLISH_PORT=1080
 | `HOST_GIT_CONFIG`      | `~/.gitconfig` (read-only) from the host                         |
 | `HOST_SSH_DIR`         | `~/.ssh` (read-only) from the host                               |
 | `HOST_GRADLE_HOME`     | Host Gradle home; cache + `gradle.properties` mounted read-only  |
+| `HOST_JAVA_CACERTS`    | Optional CA truststore merged into the JDK cacerts on start      |
+| `HOST_JAVA_CACERTS_PASS` | Password for `HOST_JAVA_CACERTS` (default `changeit`)          |
 | `VPN_MODE`             | **Required.** `singbox` \| `hostproxy` \| `wireguard`            |
 | `SUB_URL`              | `singbox` mode: subscription URL returning sing-box JSON         |
 | `HOSTPROXY_PORT`       | `hostproxy` mode: port of your host's SOCKS5 proxy               |
@@ -195,6 +207,8 @@ filename minus `.conf` becomes the interface name (letters, digits, `-`, `_`;
   `127.0.0.1:${SOCKS_PUBLISH_PORT}`.
 - `${HOST_GRADLE_HOME}/gradle.properties` must exist before the first start, or
   Docker will create a directory in its place.
+- `HOST_JAVA_CACERTS` is merged into the JDK truststore at **runtime**, so your
+  corporate CAs are never baked into the image; cert rotation needs no rebuild.
 - Project-local `.gradle/` and `build/` are shared with the host, so build from
   one side at a time.
 - sing-box logs land in `/var/lib/devbox/singbox/sing-box.log`.
