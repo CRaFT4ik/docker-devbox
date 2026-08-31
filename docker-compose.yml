@@ -34,7 +34,6 @@ services:
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
       - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
       - "${HOST_GRADLE_HOME}/caches:/var/lib/devbox/gradle/caches-ro:ro"
-      - "${HOST_GRADLE_HOME}/gradle.properties:/var/lib/devbox/gradle/gradle.properties:ro"
       - "${HOST_JAVA_CACERTS:-/dev/null}:/etc/devbox/custom-cacerts:ro"
       - "devbox:/var/lib/devbox"
     working_dir: /home/${DEV_USER}/mnt/.work

@@ -64,7 +64,7 @@ ln -sfn "${PERSIST_HOME}/.config/gh" "${HOME}/.config/gh"
 
 # Gradle writes into its own home in the volume: a home shared with the host
 # corrupts its caches, the file locks don't hold across the VM boundary. Only
-# the host's read-only caches-ro and gradle.properties are mounted into it.
+# the host's read-only dependency cache (caches-ro) is mounted into it.
 ln -sfn "${GRADLE_USER_HOME}" "${HOME}/.gradle"
 
 # A project's local.properties is shared with the host, so its sdk.dir holds a

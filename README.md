@@ -36,8 +36,7 @@ Base: Ubuntu 24.04 · JDK 17 · Node 22 · Python 3 · timezone Europe/Moscow.
   resolves on both sides.
 - **Gradle:** the container keeps its **own** Gradle home in the volume and reads
   the host's dependency cache read-only — sharing one Gradle home across the
-  macOS/Linux boundary corrupts Gradle's caches. `gradle.properties` stays the
-  same file as on the host, so artifact-repo credentials live in one place.
+  macOS/Linux boundary corrupts Gradle's caches.
 - **Persistence:** a named volume `devbox` keeps agent configs/sessions
   (`~/.claude`, `~/.codex`, `~/.cursor`, `~/.grok`), your shell configs
   (`~/.zshrc`, `~/.p10k.zsh`, history, …), the Gradle home and sing-box state
@@ -82,7 +81,6 @@ services:
       - "${HOST_GIT_CONFIG}:/home/${DEV_USER}/.gitconfig:ro"
       - "${HOST_SSH_DIR}:/home/${DEV_USER}/.ssh:ro"
       - "${HOST_GRADLE_HOME}/caches:/var/lib/devbox/gradle/caches-ro:ro"
-      - "${HOST_GRADLE_HOME}/gradle.properties:/var/lib/devbox/gradle/gradle.properties:ro"
       # Optional custom CA truststore; unset -> /dev/null, which the entrypoint skips.
       - "${HOST_JAVA_CACERTS:-/dev/null}:/etc/devbox/custom-cacerts:ro"
       - "devbox:/var/lib/devbox"
@@ -126,8 +124,8 @@ HOST_WORK_DIR=/absolute/path/to/workdir
 HOST_GIT_CONFIG=/absolute/path/to/.gitconfig
 HOST_SSH_DIR=/absolute/path/to/.ssh
 
-# Host Gradle home. Its dependency cache and gradle.properties are mounted
-# read-only; the container writes to its own Gradle home in the volume.
+# Host Gradle home. Its dependency cache is mounted read-only; the container
+# writes to its own Gradle home in the volume.
 HOST_GRADLE_HOME=/absolute/path/to/.gradle
 
 # Optional: a custom Java truststore (JKS/PKCS12) with your corporate CAs. On
@@ -164,7 +162,7 @@ SOCKS_PUBLISH_PORT=1080
 | `HOST_WORK_DIR`        | Your projects dir, mounted to `~/mnt/.work` (working dir)        |
 | `HOST_GIT_CONFIG`      | `~/.gitconfig` (read-only) from the host                         |
 | `HOST_SSH_DIR`         | `~/.ssh` (read-only) from the host                               |
-| `HOST_GRADLE_HOME`     | Host Gradle home; cache + `gradle.properties` mounted read-only  |
+| `HOST_GRADLE_HOME`     | Host Gradle home; its dependency cache is mounted read-only      |
 | `HOST_JAVA_CACERTS`    | Optional CA truststore merged into the JDK cacerts on start      |
 | `HOST_JAVA_CACERTS_PASS` | Password for `HOST_JAVA_CACERTS` (default `changeit`)          |
 | `VPN_MODE`             | **Required.** `singbox` \| `hostproxy` \| `wireguard`            |
@@ -205,8 +203,6 @@ filename minus `.conf` becomes the interface name (letters, digits, `-`, `_`;
 - First launch takes a moment to seed configs into the volume.
 - Tunnel host apps through the VPN via the SOCKS5 proxy at
   `127.0.0.1:${SOCKS_PUBLISH_PORT}`.
-- `${HOST_GRADLE_HOME}/gradle.properties` must exist before the first start, or
-  Docker will create a directory in its place.
 - `HOST_JAVA_CACERTS` is merged into the JDK truststore at **runtime**, so your
   corporate CAs are never baked into the image; cert rotation needs no rebuild.
 - Project-local `.gradle/` and `build/` are shared with the host, so build from
