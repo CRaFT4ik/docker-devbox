@@ -61,6 +61,7 @@ services:
       VPN_MODE: ${VPN_MODE}
       HOST_ANDROID_SDK: ${HOST_ANDROID_SDK}
       SUB_URL: ${SUB_URL:-}
+      HOSTPROXY_HOST: ${HOSTPROXY_HOST:-}
       HOSTPROXY_PORT: ${HOSTPROXY_PORT:-}
       HOSTPROXY_DNS_SERVER: ${HOSTPROXY_DNS_SERVER:-}
       HOST_JAVA_CACERTS_PASS: ${HOST_JAVA_CACERTS_PASS:-}
@@ -141,8 +142,11 @@ VPN_MODE=singbox
 # singbox mode: subscription URL whose panel returns sing-box JSON.
 SUB_URL=
 
-# hostproxy mode: port of your host's own SOCKS5 proxy, dialed via
-# host.docker.internal. Distinct from SOCKS_PUBLISH_PORT below.
+# hostproxy mode: where the upstream SOCKS5 proxy lives. Empty = the Docker host
+# (host.docker.internal); set a LAN/router IP to dial that instead.
+HOSTPROXY_HOST=
+# hostproxy mode: port of the upstream SOCKS5 proxy (on HOSTPROXY_HOST).
+# Distinct from SOCKS_PUBLISH_PORT below.
 HOSTPROXY_PORT=
 # hostproxy mode: resolver reached through that proxy (default 8.8.8.8).
 HOSTPROXY_DNS_SERVER=
@@ -167,7 +171,8 @@ SOCKS_PUBLISH_PORT=1080
 | `HOST_JAVA_CACERTS_PASS` | Password for `HOST_JAVA_CACERTS` (default `changeit`)          |
 | `VPN_MODE`             | **Required.** `singbox` \| `hostproxy` \| `wireguard`            |
 | `SUB_URL`              | `singbox` mode: subscription URL returning sing-box JSON         |
-| `HOSTPROXY_PORT`       | `hostproxy` mode: port of your host's SOCKS5 proxy               |
+| `HOSTPROXY_HOST`       | `hostproxy` mode: upstream proxy host; empty = the Docker host   |
+| `HOSTPROXY_PORT`       | `hostproxy` mode: port of the upstream SOCKS5 proxy              |
 | `HOSTPROXY_DNS_SERVER` | `hostproxy` mode: resolver behind that proxy (default `8.8.8.8`) |
 | `SOCKS_PUBLISH_PORT`   | Host port for the SOCKS5 proxy (`127.0.0.1:<port>` → `:1080`)    |
 

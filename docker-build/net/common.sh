@@ -39,6 +39,29 @@ exclude_host_from_tun() {
     log "host-gateway ($net) and LAN (192.168.0.0/16) excluded from TUN -> direct via host NIC"
 }
 
+# Keep the upstream SOCKS dial itself OUT of the TUN, so reaching the proxy does
+# not loop back through the proxy. For the default host.docker.internal that is
+# exactly the host-gateway exclusion above; for a LAN/router IP, exclude that
+# address and its /24 too. The host gateway is always excluded either way, so
+# host services (the container's own proxy, host MCP servers) stay direct.
+exclude_proxy_host_from_tun() {
+    local host="$1" net dst
+    exclude_host_from_tun
+    if [ -z "$host" ] || [ "$host" = host.docker.internal ]; then
+        return 0
+    fi
+    if [[ "$host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        net="${host%.*}.0/24"
+        for dst in "${host}/32" "$net"; do
+            sudo ip rule del to "$dst" lookup main pref 1 2>/dev/null || true   # idempotent
+            sudo ip rule add to "$dst" lookup main pref 1
+        done
+        log "proxy host ($host, $net) excluded from TUN -> direct via host NIC"
+    else
+        log "WARN: HOSTPROXY_HOST '$host' is not an IPv4 address; cannot exclude it from the TUN (the proxy dial may loop)"
+    fi
+}
+
 # Names of current tun* links, space-separated (empty if none).
 snapshot_tuns() {
     ip -o link show 2>/dev/null | awk -F': ' '$2 ~ /^tun/ {print $2}' | tr '\n' ' '
